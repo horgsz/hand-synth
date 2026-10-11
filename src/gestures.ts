@@ -28,14 +28,19 @@ class Touch {
 export interface HandState { hand: Hand; touch: boolean[] }
 
 export class Gestures {
-  private ps = new Smooth(); private cs = new Smooth(); private pt = new Touch(); private ct = new Touch();
-  update(hands: Hand[]): { play: HandState | null; ctl: HandState | null } {
-    // Hand further to the user's right plays; the other controls.
-    const sorted = [...hands].sort((a, b) => b[0].x - a[0].x);
-    const p = this.ps.push(sorted[0]), c = this.cs.push(sorted[1]);
+  private rs = new Smooth(); private ls = new Smooth(); private rt = new Touch(); private lt = new Touch();
+  private mouth = false;
+  update(hands: Hand[], jaw: number) {
+    // Two hands: split by x. One hand: assign by which half of the frame it's in.
+    let r: Hand | undefined, l: Hand | undefined;
+    if (hands.length > 1) [r, l] = [...hands].sort((a, b) => b[0].x - a[0].x);
+    else if (hands[0]) hands[0][0].x > 0.5 ? (r = hands[0]) : (l = hands[0]);
+    const rh = this.rs.push(r), lh = this.ls.push(l);
+    this.mouth = this.mouth ? jaw > 0.25 : jaw > 0.4;
     return {
-      play: p ? { hand: p, touch: [...this.pt.update(p)] } : (this.pt.update(null), null),
-      ctl: c ? { hand: c, touch: [...this.ct.update(c)] } : (this.ct.update(null), null),
+      right: rh ? { hand: rh, touch: [...this.rt.update(rh)] } : (this.rt.update(null), null),
+      left: lh ? { hand: lh, touch: [...this.lt.update(lh)] } : (this.lt.update(null), null),
+      mouth: this.mouth,
     };
   }
 }

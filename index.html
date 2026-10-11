@@ -20,16 +20,18 @@
   </section>
   <aside>
     <div class="card big"><label>Note</label><div id="note" class="value">—</div><div id="chord" class="sub">Touch a finger to your thumb</div></div>
+    <label class="section">Effects · click to toggle</label>
     <div class="grid">
-      <div class="card fx" id="fx0"><label>Index</label><div class="value sm">Delay</div></div>
-      <div class="card fx" id="fx1"><label>Middle</label><div class="value sm">Reverb</div></div>
-      <div class="card fx" id="fx2"><label>Ring</label><div class="value sm">Filter</div></div>
-      <div class="card fx" id="fx3"><label>Pinky</label><div class="value sm">Octave ↑</div></div>
+      <button class="card fx" data-fx="delay"><label>Echo</label><div class="value sm">Delay</div></button>
+      <button class="card fx" data-fx="reverb"><label>Space</label><div class="value sm">Reverb</div></button>
+      <button class="card fx" data-fx="filter"><label>Sweep</label><div class="value sm">Filter</div></button>
+      <button class="card fx" data-fx="chorus"><label>Width</label><div class="value sm">Chorus</div></button>
     </div>
+    <div class="card" id="mouthcard"><label>Mouth</label><div id="mouth" class="value sm">Closed</div><div class="sub">Open your mouth to shift up an octave</div></div>
     <div class="card"><label>Loop</label><div id="loop" class="value sm">Empty</div><div class="sub">100 BPM · 2 bars</div></div>
     <div class="card help">
-      <div><span class="tag">Right hand</span>Touch a finger to your thumb to play a note · touch several for a chord</div>
-      <div><span class="tag alt">Left hand</span>Touch a finger to your thumb to hold the effect above</div>
+      <div><span class="tag">Right hand</span>Touch index / middle / ring / pinky to thumb → notes 1–4</div>
+      <div><span class="tag alt">Left hand</span>Touch index / middle / ring / pinky to thumb → notes 5–8</div>
     </div>
   </aside>
 </main>

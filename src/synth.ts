@@ -7,6 +7,7 @@ export class Synth {
   private filter = new Tone.Filter(4000, 'lowpass');
   private delay = new Tone.FeedbackDelay('8n.', 0.35);
   private reverb = new Tone.Reverb(3);
+  private chorus = new Tone.Chorus(4, 2.5, 0.6).start();
   private vol = new Tone.Volume(-60);
   private live = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'fatsawtooth', count: 3, spread: 20 }, envelope: { attack: 0.02, release: 0.4 } });
   private loopSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'fatsawtooth', count: 3, spread: 20 }, envelope: { attack: 0.02, release: 0.4 } });
@@ -18,8 +19,8 @@ export class Synth {
   constructor() {
     this.live.chain(this.vol, this.filter);
     this.loopSynth.volume.value = -8; this.loopSynth.connect(this.filter);
-    this.filter.chain(this.delay, this.reverb, this.analyser, Tone.getDestination());
-    this.delay.wet.value = 0; this.reverb.wet.value = 0;
+    this.filter.chain(this.chorus, this.delay, this.reverb, this.analyser, Tone.getDestination());
+    this.delay.wet.value = 0; this.reverb.wet.value = 0; this.chorus.wet.value = 0;
   }
 
   async start() {
@@ -39,6 +40,7 @@ export class Synth {
   setFilter(hz: number) { this.filter.frequency.rampTo(hz, 0.05); }
   setDelay(w: number) { this.delay.wet.rampTo(w * 0.5, 0.1); }
   setReverb(w: number) { this.reverb.wet.rampTo(w * 0.7, 0.1); }
+  setChorus(w: number) { this.chorus.wet.rampTo(w, 0.1); }
 
   /** Arm recording for the next full loop cycle. */
   record() {
