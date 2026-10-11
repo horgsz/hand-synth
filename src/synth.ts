@@ -37,7 +37,8 @@ export class Synth {
   }
   setVolume(v: number) { this.vol.volume.rampTo(v <= 0 ? -60 : Tone.gainToDb(v), 0.05); }
   setFilter(hz: number) { this.filter.frequency.rampTo(hz, 0.05); }
-  setFx(w: number) { this.delay.wet.rampTo(w * 0.5, 0.1); this.reverb.wet.rampTo(w * 0.7, 0.1); }
+  setDelay(w: number) { this.delay.wet.rampTo(w * 0.5, 0.1); }
+  setReverb(w: number) { this.reverb.wet.rampTo(w * 0.7, 0.1); }
 
   /** Arm recording for the next full loop cycle. */
   record() {

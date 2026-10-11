@@ -19,16 +19,17 @@
     <div class="loopbar"><div id="loopfill"></div></div>
   </section>
   <aside>
-    <div class="card big"><label>Note</label><div id="note" class="value">—</div><div id="chord" class="sub">Pinch to play</div></div>
+    <div class="card big"><label>Note</label><div id="note" class="value">—</div><div id="chord" class="sub">Touch a finger to your thumb</div></div>
     <div class="grid">
-      <div class="card"><label>Volume</label><div id="vol" class="value sm">0%</div><div class="meter"><i id="volm"></i></div></div>
-      <div class="card"><label>Filter</label><div id="flt" class="value sm">—</div><div class="meter"><i id="fltm"></i></div></div>
-      <div class="card"><label>Space</label><div id="fx" class="value sm">0%</div><div class="meter"><i id="fxm"></i></div></div>
-      <div class="card"><label>Loop</label><div id="loop" class="value sm">Empty</div><div class="sub">100 BPM · 2 bars</div></div>
+      <div class="card fx" id="fx0"><label>Index</label><div class="value sm">Delay</div></div>
+      <div class="card fx" id="fx1"><label>Middle</label><div class="value sm">Reverb</div></div>
+      <div class="card fx" id="fx2"><label>Ring</label><div class="value sm">Filter</div></div>
+      <div class="card fx" id="fx3"><label>Pinky</label><div class="value sm">Octave ↑</div></div>
     </div>
+    <div class="card"><label>Loop</label><div id="loop" class="value sm">Empty</div><div class="sub">100 BPM · 2 bars</div></div>
     <div class="card help">
-      <div><span class="tag">Right hand</span>Pinch to play · move ↔ pitch · ↕ volume · raise fingers for chords</div>
-      <div><span class="tag alt">Left hand</span>Height = filter · open hand = delay + reverb</div>
+      <div><span class="tag">Right hand</span>Touch a finger to your thumb to play a note · touch several for a chord</div>
+      <div><span class="tag alt">Left hand</span>Touch a finger to your thumb to hold the effect above</div>
     </div>
   </aside>
 </main>
