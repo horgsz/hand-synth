@@ -1,0 +1,40 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>hand-synth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">  <script type="module" crossorigin src="./assets/index-DvcXBcxQ.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Dwoavp7m.css">
+</head>
+<body>
+<header>
+  <div class="logo"><span class="dot"></span><span>hand<b>synth</b></span></div>
+  <div class="pills">
+    <select id="scale" class="pill"><option value="0,2,4,7,9">Pentatonic</option><option value="0,2,3,5,7,8,10">Minor</option><option value="0,2,4,5,7,9,11">Major</option><option value="0,1,2,3,4,5,6,7,8,9,10,11">Chromatic</option></select>
+    <button id="rec" class="pill" disabled>● Rec <kbd>L</kbd></button>
+    <button id="clr" class="pill" disabled>Clear <kbd>C</kbd></button>
+    <button id="go" class="pill accent">Start</button>
+  </div>
+</header>
+<main>
+  <section class="card stage">
+    <div id="wrap"><canvas id="viz"></canvas><canvas id="stage" width="1280" height="720"></canvas>
+      <div id="overlay"><h1>Play music with your hands</h1><p>Allow camera access, then press Start.</p></div></div>
+    <div class="loopbar"><div id="loopfill"></div></div>
+  </section>
+  <aside>
+    <div class="card big"><label>Note</label><div id="note" class="value">—</div><div id="chord" class="sub">Touch a finger to your thumb</div></div>
+    <label class="section">Effects · click to toggle</label>
+    <div class="grid">
+      <button class="card fx" data-fx="delay"><label>Echo</label><div class="value sm">Delay</div></button>
+      <button class="card fx" data-fx="reverb"><label>Space</label><div class="value sm">Reverb</div></button>
+      <button class="card fx" data-fx="filter"><label>Sweep</label><div class="value sm">Filter</div></button>
+      <button class="card fx" data-fx="chorus"><label>Width</label><div class="value sm">Chorus</div></button>
+    </div>
+    <div class="card" id="mouthcard"><label>Mouth</label><div id="mouth" class="value sm">Closed</div><div class="sub">Open your mouth to shift up an octave</div></div>
+    <div class="card"><label>Loop</label><div id="loop" class="value sm">Empty</div><div class="sub">100 BPM · 2 bars</div></div>
+    <div class="card help">
+      <div><span class="tag">Right hand</span>Touch pinky / ring / middle / index to thumb → notes 1–4</div>
+      <div><span class="tag alt">Left hand</span>Touch index / middle / ring / pinky to thumb → notes 5–8</div>
+    </div>
+  </aside>
+</main>
+<video id="video" hidden playsinline muted></video>
+</body></html>
