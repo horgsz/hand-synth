@@ -1,33 +1,69 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>hand-synth</title>
-<style>body{margin:0;background:#111;color:#eee;font-family:sans-serif;text-align:center}#w{position:relative;width:90vw;max-width:1200px;margin:auto}#viz{position:absolute;inset:-30px;width:calc(100% + 60px);height:calc(100% + 60px)}#c{position:relative;width:100%;display:block;transform:scaleX(-1);border-radius:8px}</style>
+<style>body{margin:0;background:#111;color:#eee;font-family:sans-serif;text-align:center}#w{position:relative;width:90vw;max-width:1200px;margin:40px auto}#viz,#fx{position:absolute;pointer-events:none}#viz{inset:-30px;width:calc(100% + 60px);height:calc(100% + 60px)}#fx{inset:0;width:100%;height:100%;transform:scaleX(-1)}#c{width:100%;display:block;transform:scaleX(-1);border-radius:8px}</style>
 </head><body>
-<p>Click Start. Index finger: left/right = pitch, up/down = volume.</p>
-<button id="go">Start</button><br><video id="v" hidden playsinline></video><div id="w"><canvas id="viz"></canvas><canvas id="c" width="1280" height="720"></canvas></div>
+<p>Play hand: pinch thumb+index to sound · move left/right = pitch, up/down = volume · raise middle/ring/pinky for chords.<br>
+Other hand: height = filter, open/closed = delay+reverb. Keys: <b>L</b> record/stop loop (overdubs), <b>C</b> clear loop.</p>
+<button id="go">Start</button> <select id="sc"><option value="0,2,4,7,9">Pentatonic</option><option value="0,2,3,5,7,8,10">Minor</option><option value="0,2,4,5,7,9,11">Major</option><option value="">Free (no snap)</option></select> <span id="st"></span>
+<div id="w"><canvas id="viz"></canvas><canvas id="c" width="1280" height="720"></canvas><canvas id="fx" width="1280" height="720"></canvas></div>
+<video id="v" hidden playsinline></video>
 <script type="module">
 import {HandLandmarker,FilesetResolver} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
-const v=document.getElementById('v'),c=document.getElementById('c'),x=c.getContext('2d');
+const $=id=>document.getElementById(id),c=$('c'),x=c.getContext('2d'),f=$('fx'),fq=f.getContext('2d');
+const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 go.onclick=async()=>{
   go.remove();
-  const ac=new AudioContext(),o=ac.createOscillator(),g=ac.createGain();
-  o.type='sawtooth';g.gain.value=0;const an=ac.createAnalyser();an.fftSize=256;const fd=new Uint8Array(128);o.connect(g).connect(an).connect(ac.destination);o.start();
+  const ac=new AudioContext(),T=()=>ac.currentTime;
+  const g=ac.createGain(),flt=ac.createBiquadFilter(),an=ac.createAnalyser(),out=ac.createGain();
+  g.gain.value=0;flt.frequency.value=4000;an.fftSize=256;const fd=new Uint8Array(128);
+  const oscs=[0,1,2,3].map(()=>{const o=ac.createOscillator(),og=ac.createGain();o.type='sawtooth';og.gain.value=0;o.connect(og).connect(g);o.start();return[o,og]});
+  // fx: delay + reverb sends
+  const dl=ac.createDelay(1),fb=ac.createGain(),dw=ac.createGain(),cv=ac.createConvolver(),rw=ac.createGain();
+  dl.delayTime.value=.35;fb.gain.value=.4;dw.gain.value=0;rw.gain.value=0;
+  const ir=ac.createBuffer(2,ac.sampleRate*2.5,ac.sampleRate);for(let ch=0;ch<2;ch++){const b=ir.getChannelData(ch);for(let i=0;i<b.length;i++)b[i]=(Math.random()*2-1)*(1-i/b.length)**3}cv.buffer=ir;
+  g.connect(flt);flt.connect(out);flt.connect(dl);dl.connect(fb).connect(dl);dl.connect(dw).connect(out);flt.connect(cv).connect(rw).connect(out);
+  out.connect(an).connect(ac.destination);
+  // looper
+  const rec=ac.createMediaStreamDestination();out.connect(rec);let mr=null,loop=null,ls=null;
+  const lg=ac.createGain();lg.connect(an);lg.connect(rec);
+  const status=()=>st.textContent=mr?'● recording':loop?'⟳ looping':'';
+  onkeydown=async e=>{
+    if(e.key=='l'){if(!mr){const ch=[];mr=new MediaRecorder(rec.stream);mr.ondataavailable=e=>ch.push(e.data);
+      mr.onstop=async()=>{const buf=await ac.decodeAudioData(await new Blob(ch).arrayBuffer());ls?.stop();ls=ac.createBufferSource();ls.buffer=buf;ls.loop=true;ls.connect(lg);ls.start();loop=buf;mr=null;status()};mr.start()}else mr.stop()}
+    if(e.key=='c'){ls?.stop();ls=loop=null}
+    status()};
   const fs=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
-  const hl=await HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"},runningMode:"VIDEO",numHands:1});
-  v.srcObject=await navigator.mediaDevices.getUserMedia({video:{width:1280,height:720}});await v.play();
-  const loop=()=>{
+  const hl=await HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"},runningMode:"VIDEO",numHands:2});
+  const v=$('v');v.srcObject=await navigator.mediaDevices.getUserMedia({video:{width:1280,height:720}});await v.play();
+  const parts=[];
+  const snap=semi=>{const s=sc.value?sc.value.split(',').map(Number):null;if(!s)return semi;const o=Math.floor(semi/12),r=semi-o*12;return o*12+s.reduce((a,b)=>Math.abs(b-r)<Math.abs(a-r)?b:a,s[0])};
+  const deg=(base,k)=>{const s=sc.value?sc.value.split(',').map(Number):[0,2,4,5,7,9,11],o=Math.floor(base/12),r=base-o*12,i=s.indexOf(r)<0?0:s.indexOf(r),j=i+k*2;return o*12+s[j%s.length]+12*Math.floor(j/s.length)};
+  const draw=()=>{
     x.drawImage(v,0,0,c.width,c.height);
-    const r=hl.detectForVideo(v,performance.now()),t=ac.currentTime;
-    if(r.landmarks[0]){
-      const p=r.landmarks[0][8],nx=1-p.x;
-      o.frequency.setTargetAtTime(110*2**(nx*3),t,.03);
-      g.gain.setTargetAtTime((1-p.y)*.3,t,.03);
-      x.fillStyle='#0f0';x.beginPath();x.arc(p.x*c.width,p.y*c.height,10,0,7);x.fill();
+    const r=hl.detectForVideo(v,performance.now()),t=T();
+    let play=null,ctl=null;
+    r.landmarks.forEach((L,i)=>{(r.handednesses[i][0].categoryName=='Left'?(play?ctl=L:play=L):(ctl?play=L:ctl=L))});
+    if(play){
+      const p=play[9],pinch=d(play[4],play[8])<.06,base=snap(Math.round((1-p.x)*36)),
+        n=1+[12,16,20].filter(k=>play[k].y<play[k-2].y).length;
+      oscs.forEach(([o,og],k)=>{o.frequency.setTargetAtTime(110*2**(deg(base,k)/12),t,.02);og.gain.setTargetAtTime(k<n?.25/n**.5:0,t,.03)});
+      g.gain.setTargetAtTime(pinch?(1-p.y)*.5:0,t,.02);
+      const tip=play[8];for(let k=0;k<(pinch?4:1);k++)parts.push({x:tip.x*c.width,y:tip.y*c.height,vx:Math.random()*4-2,vy:Math.random()*4-2,l:1,h:base*10});
     }else g.gain.setTargetAtTime(0,t,.1);
-    const z=viz,q=z.getContext('2d');z.width=z.clientWidth;z.height=z.clientHeight;an.getByteFrequencyData(fd);
-    const W=z.width,H=z.height,n=64;q.clearRect(0,0,W,H);
-    for(let i=0;i<n;i++){const a=fd[i]/255*30,h=(i*5+t*60)%360;q.fillStyle=`hsl(${h},90%,60%)`;const bx=W/n,by=H/n;
-      q.fillRect(i*bx,30-a,bx-2,a);q.fillRect(W-(i+1)*bx,H-30,bx-2,a);q.fillRect(30-a,H-(i+1)*by,a,by-2);q.fillRect(W-30,i*by,a,by-2);}
-    requestAnimationFrame(loop);
-  };loop();
+    if(ctl){
+      flt.frequency.setTargetAtTime(200*2**((1-ctl[9].y)*6),t,.05);
+      const open=Math.min(1,Math.max(0,([8,12,16,20].reduce((a,k)=>a+d(ctl[k],ctl[0]),0)/4-.15)/.2));
+      dw.gain.setTargetAtTime(open*.6,t,.05);rw.gain.setTargetAtTime(open*.8,t,.05);
+      parts.push({x:ctl[8].x*c.width,y:ctl[8].y*c.height,vx:0,vy:0,l:1,h:200});
+    }
+    fq.clearRect(0,0,f.width,f.height);
+    for(let i=parts.length-1;i>=0;i--){const q=parts[i];q.x+=q.vx;q.y+=q.vy;q.l-=.02;if(q.l<=0){parts.splice(i,1);continue}
+      fq.fillStyle=`hsla(${q.h%360},90%,60%,${q.l})`;fq.beginPath();fq.arc(q.x,q.y,8*q.l,0,7);fq.fill()}
+    const z=viz,zq=z.getContext('2d');z.width=z.clientWidth;z.height=z.clientHeight;an.getByteFrequencyData(fd);
+    const W=z.width,H=z.height,N=64;zq.clearRect(0,0,W,H);
+    for(let i=0;i<N;i++){const a=fd[i]/255*30;zq.fillStyle=`hsl(${(i*5+t*60)%360},90%,60%)`;const bx=W/N,by=H/N;
+      zq.fillRect(i*bx,30-a,bx-2,a);zq.fillRect(W-(i+1)*bx,H-30,bx-2,a);zq.fillRect(30-a,H-(i+1)*by,a,by-2);zq.fillRect(W-30,i*by,a,by-2)}
+    requestAnimationFrame(draw);
+  };draw();
 };
 </script></body></html>
