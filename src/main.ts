@@ -18,7 +18,7 @@ const midi = (deg: number, oct: number) => {
   const s = scaleSel.value.split(',').map(Number);
   return ROOT + 12 * oct + s[deg % s.length] + 12 * Math.floor(deg / s.length);
 };
-const pressed = (h: HandState | null, offset: number) => h ? h.touch.flatMap((on, i) => on ? [i + offset] : []) : [];
+const pressed = (h: HandState | null, offset: number, rev = false) => h ? h.touch.flatMap((on, i) => on ? [(rev ? 3 - i : i) + offset] : []) : [];
 
 $('go').onclick = async () => {
   const go = $<HTMLButtonElement>('go'); go.disabled = true; go.textContent = 'Loading…';
@@ -36,7 +36,7 @@ $('go').onclick = async () => {
     synth.setDelay(+fx.delay); synth.setReverb(+fx.reverb); synth.setChorus(+fx.chorus);
     synth.setFilter(fx.filter ? 1200 + 1000 * Math.sin(performance.now() / 400) : 6000);
 
-    const degs = [...pressed(right, 0), ...pressed(left, 4)];
+    const degs = [...pressed(right, 0, true), ...pressed(left, 4)];
     const notes = degs.map(d => Tone.Frequency(midi(d, mouth ? 1 : 0), 'midi').toNote());
     synth.setNotes(notes);
     $('note').textContent = notes[0] ?? '—';
